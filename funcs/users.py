@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
-from database.mongo import get_user
+from database.mongo import get_db
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -12,32 +12,33 @@ import jwt
 from models.users import User
 from models.token import TokenData
 from funcs.settings import verify_password
+from models.users import UserInDB
+
+from database.mongo import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES'))
 
 #Fake
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$4znb874wXMsVGkjnUlZPYeJSbbTVLnXj6Z4axHPknEhdfS0MZK3R2",  # Contraseña hasheada
-        "disabled": False,  # Indicador si la cuenta está deshabilitada
-    }
-}
+async def get_user(username: str):
+    db = await get_db()
+    users = db.users
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)  # Busca al usuario en la base de datos
+    user = await users.find_one({"username": username})
+    if user:
+        print(user)
+        return UserInDB(**user)
+
+async def authenticate_user(username: str, password: str):
+    user = await get_user(username)  # Busca al usuario en la base de datos
     if not user:
         print("no existe usuario")
         return False  # Retorna False si el usuario no existe
     if not verify_password(password, user.hashed_password):
-        print("la contraseña no coincide")
-        return False  # Retorna False si la contraseña no coincide
+       print("la contraseña no coincide")
+       return False  # Retorna False si la contraseña no coincide
     return user  # Retorna el usuario si se autentica correctamente
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -55,7 +56,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception  # Lanza excepción si el token es inválido
-    user = get_user(fake_users_db, username=token_data.username)  # Obtiene el usuario de la base de datos
+    user = await get_user(username=token_data.username)  # Obtiene el usuario de la base de datos
     if user is None:
         raise credentials_exception  # Lanza excepción si el usuario no existe
     return user  # Retorna el usuario autenticado
@@ -73,10 +74,10 @@ async def get_current_active_user(
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     """ Dependencia que obtiene el usuario actual basado en el token JWT """
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",  # Mensaje de error si la validación falla
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",  # Mensaje de error si la validación falla
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # Decodifica el token JWT
         username: str = payload.get("sub")  # Obtiene el nombre de usuario del payload
@@ -85,7 +86,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception  # Lanza excepción si el token es inválido
-    user = get_user(fake_users_db, username=token_data.username)  # Obtiene el usuario de la base de datos
+    user = await get_user(username=token_data.username)  # Obtiene el usuario de la base de datos
     if user is None:
         raise credentials_exception  # Lanza excepción si el usuario no existe
     return user  # Retorna el usuario autenticado

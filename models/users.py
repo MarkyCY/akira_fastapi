@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
 
-# Modelo para representar un usuario
 class User(BaseModel):
+    """Modelo para representar un usuario"""
+    user_id: int
+    warnings: int | None = None
     username: str  # Nombre de usuario
-    email: str | None = None  # Email opcional
-    full_name: str | None = None  # Nombre completo opcional
     disabled: bool | None = None  # Indicador de si el usuario está deshabilitado
 
-# Extensión del modelo User para incluir la contraseña hasheada
 class UserInDB(User):
+    """Extensión del modelo User para incluir la contraseña hasheada"""
     hashed_password: str  # Contraseña hasheada

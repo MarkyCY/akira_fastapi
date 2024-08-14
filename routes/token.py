@@ -9,7 +9,6 @@ import os
 
 from models.token import Token
 from funcs.users import authenticate_user
-from funcs.users import fake_users_db
 from funcs.token import create_access_token
 
 TokenAPI = APIRouter()
@@ -22,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES'))
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)  # Autentica al usuario
+    user = await authenticate_user(form_data.username, form_data.password)  # Autentica al usuario
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
