@@ -1,5 +1,7 @@
 import os
 import motor.motor_asyncio
+
+# Resolve DNS for Termux [ Disable if you dont use Termux ]
 import dns.resolver
 dns.resolver.default_resolver=dns.resolver.Resolver(configure=False)
 dns.resolver.default_resolver.nameservers=['8.8.8.8']
