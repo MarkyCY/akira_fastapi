@@ -4,9 +4,11 @@ from pydantic import BaseModel
 class User(BaseModel):
     """Modelo para representar un usuario"""
     user_id: int
+    username: str
     warnings: int | None = None
-    username: str  # Nombre de usuario
-    disabled: bool | None = None  # Indicador de si el usuario está deshabilitado
+    description: str | None = None
+    contest: bool | None = None
+    disabled: bool | None = None 
 
 class UserInDB(User):
     """Extensión del modelo User para incluir la contraseña hasheada"""
