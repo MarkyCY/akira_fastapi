@@ -3,3 +3,5 @@ uvicorn
 pyjwt
 passlib[bcrypt]
 python-multipart
+python-dotenv
+motor
