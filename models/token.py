@@ -7,4 +7,5 @@ class Token(BaseModel):
 
 # Modelo para manejar datos del token
 class TokenData(BaseModel):
-    username: str | None = None  # Nombre de usuario opcional, puede ser None
+    username: str | None = None
+    scopes: list[str] = [] 

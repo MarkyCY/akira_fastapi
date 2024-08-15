@@ -1,6 +1,6 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Security
 from typing import Annotated
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
 from jwt.exceptions import InvalidTokenError
 from database.mongo import get_db
 from dotenv import load_dotenv
@@ -16,7 +16,16 @@ from models.users import UserInDB
 
 from database.mongo import get_db
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# Definir la jerarquía de roles
+role_hierarchy = {
+    "admin": 4,
+    "user": 1,
+}
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="token", 
+    scopes={"admin": "Admin access", "user": "User access"}
+)
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
@@ -28,16 +37,13 @@ async def get_user(username: str):
 
     user = await users.find_one({"username": username})
     if user:
-        print(user)
         return UserInDB(**user)
 
 async def authenticate_user(username: str, password: str):
     user = await get_user(username)  # Busca al usuario en la base de datos
     if not user:
-        print("no existe usuario")
         return False  # Retorna False si el usuario no existe
     if not verify_password(password, user.hashed_password):
-       print("la contraseña no coincide")
        return False  # Retorna False si la contraseña no coincide
     return user  # Retorna el usuario si se autentica correctamente
 
@@ -53,7 +59,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         username: str = payload.get("sub")  # Obtiene el nombre de usuario del payload
         if username is None:
             raise credentials_exception  # Lanza excepción si no hay nombre de usuario
-        token_data = TokenData(username=username)
+        token_scopes = payload.get("scopes", [])
+        token_data = TokenData(username=username, scopes=token_scopes)
     except InvalidTokenError:
         raise credentials_exception  # Lanza excepción si el token es inválido
     user = await get_user(username=token_data.username)  # Obtiene el usuario de la base de datos
@@ -63,11 +70,28 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 async def get_current_active_user(
+    security_scopes: SecurityScopes,
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """ Dependencia que obtiene el usuario actual si está activo """
     if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")  # Lanza excepción si el usuario está deshabilitado
+        raise HTTPException(status_code=400, detail="Inactive user")
+    
+    # Si no se requieren scopes específicos, permitir el acceso
+    if not security_scopes.scopes:
+        return current_user
+    
+    # Obtener el nivel máximo requerido por la ruta
+    required_level = max(role_hierarchy.get(scope, 0) for scope in security_scopes.scopes)
+    
+    # Verifica que el usuario tenga al menos uno de los scopes requeridos
+    user_level = max(role_hierarchy.get(role, 0) for role in current_user.role)
+    if user_level < required_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions",
+        )
+        
     return current_user  # Retorna el usuario si está activo
 
 
