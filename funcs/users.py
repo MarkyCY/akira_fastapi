@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, status, Security
 from typing import Annotated
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
+from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jwt.exceptions import InvalidTokenError
 from database.mongo import get_db
 from dotenv import load_dotenv
