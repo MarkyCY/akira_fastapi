@@ -17,20 +17,20 @@ async def read_group_stats(
     stats = await get_stats_daily()
     return stats
 
-@GroupStatsRoutes.post("/upload")
-async def upload_image(
-    user_id: int,  # Puedes usar el tipo de dato que prefieras para user_id
-    file: UploadFile = File(...),  # El parámetro file es un UploadFile
-):
-    path = f"users/photo/{user_id}.jpg"
-    if os.path.exists(path):
-        raise HTTPException(status_code=201, detail="Image already exists")
+# @GroupStatsRoutes.post("/upload")
+# async def upload_image(
+#     user_id: int,  # Puedes usar el tipo de dato que prefieras para user_id
+#     file: UploadFile = File(...),  # El parámetro file es un UploadFile
+# ):
+#     path = f"users/photo/{user_id}.jpg"
+#     if os.path.exists(path):
+#         raise HTTPException(status_code=201, detail="Image already exists")
     
-    # Leer el archivo como bytes
-    file_bytes = await file.read()
+#     # Leer el archivo como bytes
+#     file_bytes = await file.read()
     
-    # Redimensionar la imagen y convertirla a base64
-    img_base64 = resize_and_convert_to_base64(file_bytes, user_id)
+#     # Redimensionar la imagen y convertirla a base64
+#     img_base64 = resize_and_convert_to_base64(file_bytes, user_id)
     
-    # Aquí puedes realizar cualquier otra acción que necesites con img_base64
-    return {"filename": file.filename, "user_id": user_id, "image_base64": img_base64}
+#     # Aquí puedes realizar cualquier otra acción que necesites con img_base64
+#     return {"filename": file.filename, "user_id": user_id, "image_base64": img_base64}
