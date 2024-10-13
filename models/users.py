@@ -5,6 +5,7 @@ class User(BaseModel):
     """Modelo para representar un usuario"""
     user_id: int
     username: str
+    avatar: str | None = None
     warnings: int | None = None
     description: str | None = None
     contest: bool | None = None
