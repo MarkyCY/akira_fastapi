@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field
 from bson import ObjectId
-from typing import List, Optional
+from typing import List, Optional, Union
 
 class UserSubscription(BaseModel):
-    user: str = Field(..., alias="$numberLong")
+    user: Union[int, str]
 
 class ContestModel(BaseModel):
     _id: str
@@ -24,4 +24,3 @@ class ContestModel(BaseModel):
     class Config:
         orm_mode = True
         json_encoders = {ObjectId: str}
-        allow_population_by_field_name = True
