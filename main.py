@@ -13,7 +13,7 @@ app.add_middleware(
    CORSMiddleware,
    allow_origins=["https://akira-mini-app.vercel.app"],
    allow_credentials=True,
-   allow_methods=["POST", "GET"],
+   allow_methods=["*"],
    allow_headers=["*"],
    expose_headers=["Content-Range"],
 )
