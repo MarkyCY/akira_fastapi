@@ -16,6 +16,7 @@ app.add_middleware(
    allow_methods=["*"],
    allow_headers=["*"],
    expose_headers=["Content-Range"],
+   allow_origin_regex="^https://akira-mini-app\.vercel\.app$"
 )
 
 app.include_router(
