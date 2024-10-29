@@ -11,12 +11,11 @@ app = FastAPI()
 
 app.add_middleware(
    CORSMiddleware,
-   allow_origins=["https://akira-mini-app.vercel.app"],
+   allow_origins=["*"],
    allow_credentials=True,
    allow_methods=["*"],
    allow_headers=["*"],
-   expose_headers=["Content-Range"],
-   allow_origin_regex="^https://akira-mini-app\.vercel\.app$"
+   expose_headers=["Content-Range"]
 )
 
 app.include_router(
