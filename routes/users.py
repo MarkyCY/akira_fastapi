@@ -54,7 +54,7 @@ async def get_user_photo(user_id: int):
 
     if not avatar:
         raise HTTPException(status_code=404, detail="Image not found")
-    print(avatar)
+   
     response = requests.get(avatar)
     if response.status_code != 200:
         raise HTTPException(status_code=404, detail="Image not found")
