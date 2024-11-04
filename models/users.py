@@ -1,6 +1,4 @@
 from pydantic import BaseModel
-
-
 class User(BaseModel):
     """Modelo para representar un usuario"""
     user_id: int
