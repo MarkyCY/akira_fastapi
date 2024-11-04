@@ -6,7 +6,7 @@ class UserSubscription(BaseModel):
     user: Union[int, str]
 
 class ContestModel(BaseModel):
-    _id: str
+    id: str
     type: str
     amount_photo: Optional[int] = None
     amount_video: Optional[int] = None
