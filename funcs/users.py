@@ -36,12 +36,10 @@ async def get_user(username: str):
     users = db.users
 
     user = await users.find_one({"username": username})
-    print("user", user)
     if user:
         return UserInDB(**user)
 
 async def authenticate_user(username: str, password: str):
-    print(username, password)
     user = await get_user(username)  # Busca al usuario en la base de datos
     if not user:
         return False  # Retorna False si el usuario no existe
