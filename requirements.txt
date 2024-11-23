@@ -6,4 +6,5 @@ python-multipart
 python-dotenv
 motor
 Pillow
+deep-translator
 requests
