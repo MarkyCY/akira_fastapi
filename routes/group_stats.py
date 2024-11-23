@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from typing import Annotated
 from models.users import User
 from funcs.group_status import get_stats_daily, resize_and_convert_to_base64
