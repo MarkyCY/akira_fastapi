@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.news import News
 from routes.users import Users
 from routes.contest import Contest
 from routes.token import TokenAPI
@@ -30,6 +31,10 @@ app.include_router(
 app.include_router(
     Contest, 
     tags=["Concursos"]
+    )
+app.include_router(
+    News,
+    tags=["Noticias"]
     )
 app.include_router(
     GroupStatsRoutes, 
