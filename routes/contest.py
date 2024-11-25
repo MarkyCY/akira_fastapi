@@ -17,10 +17,10 @@ async def read_users_me(
     contests_collection = db.contest
     contest_list = []
     
-    # Recorrer y mapear resultados a `ContestModel`
-    async for contest in contests_collection.find():
-        contest["id"] = str(contest["_id"])  # Convierte ObjectId a str
-        contest_list.append(ContestModel(**contest))  # Usar `**contest` para mapear al modelo
+    async for contest in contests_collection.find({"status": "active"}):
+        contest["id"] = str(contest["_id"])
+        contest_list.append(ContestModel(**contest)) 
+
     return contest_list
 
 from pydantic import BaseModel

@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jwt.exceptions import InvalidTokenError
 from database.mongo import get_db
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import os
@@ -11,7 +12,7 @@ import jwt
 
 from models.users import User
 from models.token import TokenData
-from funcs.settings import verify_password
+from funcs.settings import verify_password, get_password_hash
 from models.users import UserInDB
 
 from database.mongo import get_db
@@ -29,8 +30,8 @@ oauth2_scheme = OAuth2PasswordBearer(
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
+GLOBAL_PASS = os.getenv('GLOBAL_PASS')
 
-#Fake
 async def get_user(username: str):
     db = await get_db()
     users = db.users
@@ -42,9 +43,9 @@ async def get_user(username: str):
 async def authenticate_user(username: str, password: str):
     user = await get_user(username)  # Busca al usuario en la base de datos
     if not user:
-        return False  # Retorna False si el usuario no existe
-    if not verify_password(password, user.hashed_password):
-       return False  # Retorna False si la contraseña no coincide
+        return 404  # Retorna False si el usuario no existe
+    if not verify_password(password, get_password_hash(GLOBAL_PASS)):
+       return 401  # Retorna False si la contraseña no coincide
     return user  # Retorna el usuario si se autentica correctamente
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):

@@ -8,7 +8,7 @@ load_dotenv()
 import os
 
 from models.token import Token
-from funcs.users import authenticate_user
+from funcs.users import authenticate_user#, register_user
 from funcs.token import create_access_token
 
 TokenAPI = APIRouter()
@@ -22,10 +22,16 @@ async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
     user = await authenticate_user(form_data.username, form_data.password)  # Autentica al usuario
-    if not user:
+    if user == 401:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",  # Mensaje de error si las credenciales son incorrectas
+            detail="Credenciales incorrectas",  # Mensaje de error si las credenciales son incorrectas
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if user == 404:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usted no se encuentra registrado",  # Mensaje de error si el usuario no existe
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)  # Calcula la expiración del token
