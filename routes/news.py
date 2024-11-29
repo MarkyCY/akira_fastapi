@@ -17,12 +17,12 @@ News = APIRouter()
 
 class New(BaseModel):
     id: int
-    title: str
-    link: str
+    ttl: str
+    lnk: str
     publ: str
     updt: str
-    summary: str
-    category: list
+    summ: str
+    catgy: list
 
 
 @News.get("/news", response_model=list[New])
@@ -53,12 +53,12 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)],):
         category_terms = [category.attrib['term'] for category in categories]
         entries.append({
             'id': id_clean,
-            'title': title_clean,
-            'link': link,
+            'ttl': title_clean,
+            'lnk': link,
             'publ': published,
             'updt': updated,
-            'summary': summary,
-            'category': category_terms
+            'summ': summary,
+            'catgy': category_terms
         })
         if i >= 9:
             break
