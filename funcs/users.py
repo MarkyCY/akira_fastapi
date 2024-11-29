@@ -58,12 +58,14 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # Decodifica el token JWT
+        print(payload.get("sub"), payload.get("scopes"))
         user_id: int = payload.get("sub")  # Obtiene el nombre de usuario del payload
         if user_id is None:
             raise credentials_exception  # Lanza excepción si no hay nombre de usuario
         token_scopes = payload.get("scopes", [])
         token_data = TokenData(user_id=user_id, scopes=token_scopes)
-    except InvalidTokenError:
+    except InvalidTokenError as e:
+        print(e)
         raise credentials_exception  # Lanza excepción si el token es inválido
     user = await get_user(user_id=token_data.user_id)  # Obtiene el usuario de la base de datos
     if user is None:
@@ -95,24 +97,3 @@ async def get_current_active_user(
         )
         
     return current_user  # Retorna el usuario si está activo
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    """ Dependencia que obtiene el usuario actual basado en el token JWT """
-    credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",  # Mensaje de error si la validación falla
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # Decodifica el token JWT
-        user_id: int = payload.get("sub")  # Obtiene el nombre de usuario del payload
-        if user_id is None:
-            raise credentials_exception  # Lanza excepción si no hay nombre de usuario
-        token_data = TokenData(user_id=user_id)
-    except InvalidTokenError:
-        raise credentials_exception  # Lanza excepción si el token es inválido
-    user = await get_user(user_id=token_data.user_id)  # Obtiene el usuario de la base de datos
-    if user is None:
-        raise credentials_exception  # Lanza excepción si el usuario no existe
-    return user  # Retorna el usuario autenticado
