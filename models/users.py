@@ -9,7 +9,7 @@ class User(BaseModel):
     warnings: int | None = None
     description: str | None = None
     contest: bool | None = None
-    role: list | None = None
+    role: list | None = ["user"]
     disabled: bool | None = None 
 
 class UserInDB(User):
