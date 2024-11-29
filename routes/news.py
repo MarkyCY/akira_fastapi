@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Annotated
 from models.users import User
 
+import json
 import re
 import requests
 import xml.etree.ElementTree as ET
@@ -26,7 +27,7 @@ class New(BaseModel):
 
 
 @News.get("/news", response_model=list[New])
-def get_news(current_user: Annotated[User, Depends(get_current_active_user)],):
+def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
 
     response = requests.get("https://www.animenewsnetwork.com/this-week-in-anime/atom.xml?ann-edition=w")
     xml_data = response.text
@@ -37,20 +38,24 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)],):
     translator = GoogleTranslator(source='en', target='es')
 
     entries = []
-    for i, entry in enumerate(root.findall('atom:entry', ns)):
+    # Obtén todos los elementos 'atom:entry'
+    all_entries = root.findall('atom:entry', ns)
+    # Itera desde el final hacia el principio, tomando los últimos 10 elementos
+    for entry in all_entries[-10:]:
         id = entry.find('atom:id', ns).text
-        id_clean = int(re.sub("https://www.animenewsnetwork.com/cms/.", "", id))
+        id_clean = int(re.sub(r"https://www.animenewsnetwork.com/cms/.", "", id))
 
         title = entry.find('atom:title', ns).text
-        title_clean = re.sub("This Week in Anime - ", "", title)
+        title_clean = re.sub(r"This Week in Anime - ", "", title)
 
-        link = entry.find('atom:link', ns).attrib['href'] 
-        summary = entry.find('atom:summary', ns).text 
+        link = entry.find('atom:link', ns).attrib['href']
+        summary = entry.find('atom:summary', ns).text
 
         published = entry.find('atom:published', ns).text
         updated = entry.find('atom:updated', ns).text
         categories = entry.findall('atom:category', ns) 
         category_terms = [category.attrib['term'] for category in categories]
+
         entries.append({
             'id': id_clean,
             'ttl': title_clean,
@@ -60,9 +65,11 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)],):
             'summ': summary,
             'catgy': category_terms
         })
-        if i >= 9:
-            break
 
-    data_string = translator.translate(text=str(entries))
-    data_list = ast.literal_eval(data_string)
+    # Serializa las entradas a JSON
+    data_json = json.dumps(entries, ensure_ascii=False)
+    # Traduce el JSON serializado
+    translated_json = translator.translate(data_json)
+    # Deserializa el JSON traducido
+    data_list = json.loads(translated_json)
     return data_list
