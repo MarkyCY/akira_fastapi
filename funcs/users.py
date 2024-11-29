@@ -43,7 +43,6 @@ async def get_user(user_id: int):
 
 async def authenticate_user(user_id: int, password: str):
     user = await get_user(user_id)  # Busca al usuario en la base de datos
-    print(user)
     if not user:
         return 404  # Retorna False si el usuario no existe
     if not verify_password(password, get_password_hash(GLOBAL_PASS)):
@@ -54,35 +53,29 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     """ Dependencia que obtiene el usuario actual basado en el token JWT """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="1Could not validate credentials",  # Mensaje de error si la validación falla
+        detail="Could not validate credentials",  # Mensaje de error si la validación falla
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # Decodifica el token JWT
-        print(payload.get("sub"), payload.get("scopes"))
-        user_id: int = payload.get("sub")  # Obtiene el nombre de usuario del payload
-        if user_id is None:
-            raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="1Could not validate credentials",  # Mensaje de error si la validación falla
-        headers={"WWW-Authenticate": "Bearer"},
-    )  # Lanza excepción si no hay nombre de usuario
+        # Asegúrate de que "sub" es una cadena
+        user_id_str = payload.get("sub")
+        if user_id_str is None:
+            raise credentials_exception
+        try:
+            user_id: int = int(user_id_str)
+        except ValueError:
+            raise credentials_exception
+
         token_scopes = payload.get("scopes", [])
         token_data = TokenData(user_id=user_id, scopes=token_scopes)
+
     except InvalidTokenError as e:
-        print(e)
-        raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="2Could not validate credentials",  # Mensaje de error si la validación falla
-        headers={"WWW-Authenticate": "Bearer"},
-    )  # Lanza excepción si el token es inválido
+        raise credentials_exception
+
     user = await get_user(user_id=token_data.user_id)  # Obtiene el usuario de la base de datos
     if user is None:
-        raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="3Could not validate credentials",  # Mensaje de error si la validación falla
-        headers={"WWW-Authenticate": "Bearer"},
-    )  # Lanza excepción si el usuario no existe
+        raise credentials_exception  # Lanza excepción si el usuario no existe
     return user  # Retorna el usuario autenticado
 
 
