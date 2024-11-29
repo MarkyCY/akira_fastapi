@@ -2,9 +2,8 @@ from bson import ObjectId
 from pydantic import BaseModel
 class User(BaseModel):
     """Modelo para representar un usuario"""
-    _id: ObjectId
     user_id: int
-    username: str
+    username: str | None = None
     avatar: str | None = None
     warnings: int | None = None
     description: str | None = None

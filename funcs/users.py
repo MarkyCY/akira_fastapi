@@ -13,7 +13,7 @@ import jwt
 from models.users import User
 from models.token import TokenData
 from funcs.settings import verify_password, get_password_hash
-from models.users import UserInDB
+from models.users import UserInDB, User
 
 from database.mongo import get_db
 
@@ -32,16 +32,17 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
 GLOBAL_PASS = os.getenv('GLOBAL_PASS')
 
-async def get_user(username: str):
+async def get_user(user_id: int):
     db = await get_db()
     users = db.users
 
-    user = await users.find_one({"username": username})
+    user = await users.find_one({"user_id": user_id})
+    
     if user:
         return UserInDB(**user)
 
-async def authenticate_user(username: str, password: str):
-    user = await get_user(username)  # Busca al usuario en la base de datos
+async def authenticate_user(user_id: int, password: str):
+    user = await get_user(user_id)  # Busca al usuario en la base de datos
     if not user:
         return 404  # Retorna False si el usuario no existe
     if not verify_password(password, get_password_hash(GLOBAL_PASS)):
@@ -57,14 +58,14 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # Decodifica el token JWT
-        username: str = payload.get("sub")  # Obtiene el nombre de usuario del payload
-        if username is None:
+        user_id: int = payload.get("sub")  # Obtiene el nombre de usuario del payload
+        if user_id is None:
             raise credentials_exception  # Lanza excepción si no hay nombre de usuario
         token_scopes = payload.get("scopes", [])
-        token_data = TokenData(username=username, scopes=token_scopes)
+        token_data = TokenData(user_id=user_id, scopes=token_scopes)
     except InvalidTokenError:
         raise credentials_exception  # Lanza excepción si el token es inválido
-    user = await get_user(username=token_data.username)  # Obtiene el usuario de la base de datos
+    user = await get_user(user_id=token_data.user_id)  # Obtiene el usuario de la base de datos
     if user is None:
         raise credentials_exception  # Lanza excepción si el usuario no existe
     return user  # Retorna el usuario autenticado
@@ -111,7 +112,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception  # Lanza excepción si el token es inválido
-    user = await get_user(username=token_data.username)  # Obtiene el usuario de la base de datos
+    user = await get_user(user_id=token_data.user_id)  # Obtiene el usuario de la base de datos
     if user is None:
         raise credentials_exception  # Lanza excepción si el usuario no existe
     return user  # Retorna el usuario autenticado
