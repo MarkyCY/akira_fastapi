@@ -41,7 +41,7 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
     # Obtén todos los elementos 'atom:entry'
     all_entries = root.findall('atom:entry', ns)
     # Itera desde el final hacia el principio, tomando los últimos 10 elementos
-    for entry in all_entries[-10:]:
+    for entry in all_entries[:10]:
         id = entry.find('atom:id', ns).text
         id_clean = int(re.sub(r"https://www.animenewsnetwork.com/cms/.", "", id))
 
@@ -58,18 +58,17 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
 
         entries.append({
             'id': id_clean,
-            'ttl': title_clean.replace('"', "'"),
+            'ttl': title_clean.replace('"', "").replace("'", ""),
             'lnk': link,
             'publ': published,
             'updt': updated,
-            'summ': summary.replace('"', "'"),
+            'summ': summary.replace('"', "").replace("'", ""),
             'catgy': category_terms
         })
-
     # Serializa las entradas a JSON
     data_json = json.dumps(entries, ensure_ascii=False)
     # Traduce el JSON serializado
-    translated_json = translator.translate(data_json)
+    translated_json = translator.translate(data_json.replace('"', "'"))
     # Deserializa el JSON traducido
-    data_list = json.loads(translated_json)
+    data_list = json.loads(translated_json.replace("'", '"'))
     return data_list
