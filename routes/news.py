@@ -58,11 +58,11 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
 
         entries.append({
             'id': id_clean,
-            'ttl': title_clean,
+            'ttl': title_clean.replace('"', "'"),
             'lnk': link,
             'publ': published,
             'updt': updated,
-            'summ': summary,
+            'summ': summary.replace('"', "'"),
             'catgy': category_terms
         })
 
