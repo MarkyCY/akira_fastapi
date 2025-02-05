@@ -29,7 +29,8 @@ class New(BaseModel):
 @News.get("/news", response_model=list[New])
 def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
 
-    response = requests.get("https://www.animenewsnetwork.com/this-week-in-anime/atom.xml?ann-edition=w")
+    #response = requests.get("https://www.animenewsnetwork.com/this-week-in-anime/atom.xml?ann-edition=w")
+    response = requests.get("https://www.animenewsnetwork.com/news/atom.xml?ann-edition=w")
     xml_data = response.text
     
     root = ET.fromstring(xml_data)
