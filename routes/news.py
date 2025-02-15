@@ -25,11 +25,8 @@ class New(BaseModel):
     summ: str
     catgy: list
 
-
 @News.get("/news", response_model=list[New])
 def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
-
-    #response = requests.get("https://www.animenewsnetwork.com/this-week-in-anime/atom.xml?ann-edition=w")
     response = requests.get("https://www.animenewsnetwork.com/news/atom.xml?ann-edition=w")
     xml_data = response.text
     
@@ -39,9 +36,7 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
     translator = GoogleTranslator(source='en', target='es')
 
     entries = []
-    # Obtén todos los elementos 'atom:entry'
     all_entries = root.findall('atom:entry', ns)
-    # Itera desde el final hacia el principio, tomando los últimos 10 elementos
     for entry in all_entries[:10]:
         id = entry.find('atom:id', ns).text
         id_clean = int(re.sub(r"https://www.animenewsnetwork.com/cms/.", "", id))
@@ -66,10 +61,25 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
             'summ': summary.replace('"', "").replace("'", ""),
             'catgy': category_terms
         })
-    # Serializa las entradas a JSON
-    data_json = json.dumps(entries, ensure_ascii=False)
-    # Traduce el JSON serializado
-    translated_json = translator.translate(data_json.replace('"', "'"))
-    # Deserializa el JSON traducido
-    data_list = json.loads(translated_json.replace("'", '"'))
-    return data_list
+    
+    texts_to_translate = [f"{entry['ttl']}|||{entry['summ']}|||{'|'.join(entry['catgy'])}" for entry in entries]
+    combined_text = ';;;'.join(texts_to_translate)
+    translated_text = translator.translate(combined_text)
+    translated_entries = [entry.strip("; ") for entry in translated_text.split(';;;')]
+    
+    for i, translated_entry in enumerate(translated_entries):
+        parts = translated_entry.split('|||')
+        if len(parts) == 3:
+            ttl, summ, catgy = parts
+        elif len(parts) == 2:
+            ttl, summ, catgy = parts[0], parts[1], ""
+        elif len(parts) == 1:
+            ttl, summ, catgy = parts[0], "", ""
+        else:
+            ttl, summ, catgy = "", "", ""
+        
+        entries[i]['ttl'] = ttl
+        entries[i]['summ'] = summ
+        #entries[i]['catgy'] = catgy.split('|') if catgy else []
+    
+    return entries
