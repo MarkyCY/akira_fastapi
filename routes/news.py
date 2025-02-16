@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from typing import Annotated
 from models.users import User
 
-import json
 import re
 import requests
 import xml.etree.ElementTree as ET
@@ -37,7 +36,7 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
 
     entries = []
     all_entries = root.findall('atom:entry', ns)
-    for entry in all_entries[:10]:
+    for entry in all_entries[:20]:
         id = entry.find('atom:id', ns).text
         id_clean = int(re.sub(r"https://www.animenewsnetwork.com/cms/.", "", id))
 
@@ -62,13 +61,18 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
             'catgy': category_terms
         })
     
-    texts_to_translate = [f"{entry['ttl']}|||{entry['summ']}|||{'|'.join(entry['catgy'])}" for entry in entries]
-    combined_text = ';;;'.join(texts_to_translate)
+    # Agregar saltos de línea antes de combinar los textos para traducción
+    texts_to_translate = [f"{entry['ttl']}\n|||\n{entry['summ']}\n|||\n{'|'.join(entry['catgy'])}" for entry in entries]
+    combined_text = '\n;;;\n'.join(texts_to_translate)
+
+    # Traducir el texto combinado
     translated_text = translator.translate(combined_text)
-    translated_entries = [entry.strip("; ") for entry in translated_text.split(';;;')]
     
+    # Separar las entradas traducidas usando ';;;'
+    translated_entries = [entry.strip() for entry in translated_text.split('\n;;;\n')]
+    # Procesar cada entrada traducida
     for i, translated_entry in enumerate(translated_entries):
-        parts = translated_entry.split('|||')
+        parts = translated_entry.split('\n|||\n')
         if len(parts) == 3:
             ttl, summ, catgy = parts
         elif len(parts) == 2:
@@ -78,8 +82,9 @@ def get_news(current_user: Annotated[User, Depends(get_current_active_user)]):
         else:
             ttl, summ, catgy = "", "", ""
         
+        # Actualizar las entradas con las traducciones
         entries[i]['ttl'] = ttl
         entries[i]['summ'] = summ
-        #entries[i]['catgy'] = catgy.split('|') if catgy else []
+        entries[i]['catgy'] = [cat.strip().capitalize() for cat in catgy.split('|')] if catgy else []
     
     return entries
