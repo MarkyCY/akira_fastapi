@@ -23,14 +23,14 @@ class Period(BaseModel):
 
 class TopAdmin(BaseModel):
     user_id: int
-    first_name: str
+    first_name: str | None
     deleted: int
     kicked: int
     banned: int
 
 class TopUser(BaseModel):
     user_id: int
-    first_name: str
+    first_name: str | None
     messages: int
     avg_chars: int
 
