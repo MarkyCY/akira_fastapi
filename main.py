@@ -6,9 +6,11 @@ from routes.users import Users
 from routes.contest import Contest
 from routes.token import TokenAPI
 from routes.group_stats import GroupStatsRoutes
-from funcs.settings import get_password_hash
 
-app = FastAPI()
+import asyncio
+import uvicorn
+
+app = FastAPI(swagger_ui_parameters={"syntaxHighlight.theme": "obsidian"})
 
 app.add_middleware(
    CORSMiddleware,
@@ -41,6 +43,10 @@ app.include_router(
     tags=["Estadísticas"]
     )
 
+async def main():
+    config = uvicorn.Config(app, host="0.0.0.0", port=5000)
+    server = uvicorn.Server(config)
+    await server.serve()
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    asyncio.run(main())
