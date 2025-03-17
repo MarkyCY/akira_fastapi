@@ -39,3 +39,4 @@ app.include_router(
     GroupStatsRoutes, 
     tags=["Estadísticas"]
     )
+
