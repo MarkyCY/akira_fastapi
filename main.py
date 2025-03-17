@@ -7,9 +7,6 @@ from routes.contest import Contest
 from routes.token import TokenAPI
 from routes.group_stats import GroupStatsRoutes
 
-import asyncio
-import uvicorn
-
 app = FastAPI(swagger_ui_parameters={"syntaxHighlight.theme": "obsidian"})
 
 app.add_middleware(
@@ -42,11 +39,3 @@ app.include_router(
     GroupStatsRoutes, 
     tags=["Estadísticas"]
     )
-
-async def main():
-    config = uvicorn.Config(app, host="0.0.0.0", port=5000)
-    server = uvicorn.Server(config)
-    await server.serve()
-
-if __name__ == "__main__":
-    asyncio.run(main())
