@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 from bson import ObjectId
 from typing import List, Literal, Optional, Union
-
 class UserSubscription(BaseModel):
     user: Union[int, str]
 
@@ -20,7 +19,6 @@ class ContestModel(BaseModel):
     subscription: Optional[List[UserSubscription]] = None
     created_by: int
     disqualified: Optional[List[UserSubscription]] = None
-
+    model_config = ConfigDict(from_attributes=True)
     class Config:
-        orm_mode = True
         json_encoders = {ObjectId: str}
