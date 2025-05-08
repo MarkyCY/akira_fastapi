@@ -1,17 +1,12 @@
+from pydantic import BaseModel, Field
 from bson import ObjectId
-from pydantic import BaseModel, ConfigDict, PlainSerializer, Field
-from typing import Annotated, List, Literal, Optional, Union
-
-PyObjectId = Annotated[
-    ObjectId,
-    PlainSerializer(lambda x: str(x), return_type=str)
-]
+from typing import List, Literal, Optional, Union
 
 class UserSubscription(BaseModel):
     user: Union[int, str]
 
 class ContestModel(BaseModel):
-    id: PyObjectId
+    id: str
     type: str
     amount_photo: Optional[int] = None
     amount_video: Optional[int] = None
@@ -26,4 +21,6 @@ class ContestModel(BaseModel):
     created_by: int
     disqualified: Optional[List[UserSubscription]] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        orm_mode = True
+        json_encoders = {ObjectId: str}
