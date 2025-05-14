@@ -6,6 +6,8 @@ from routes.users import Users
 from routes.contest import Contest
 from routes.token import TokenAPI
 from routes.group_stats import GroupStatsRoutes
+from routes.icons import IconsAPI
+from routes.canva import CanvaAPI
 
 app = FastAPI(swagger_ui_parameters={"syntaxHighlight.theme": "obsidian"})
 
@@ -38,6 +40,16 @@ app.include_router(
 app.include_router(
     GroupStatsRoutes, 
     tags=["Estadísticas"]
+    )
+app.include_router(
+    IconsAPI, 
+    prefix="/icons",
+    tags=["Iconos"]
+    )
+app.include_router(
+    CanvaAPI, 
+    prefix="/canva",
+    tags=["Canva"]
     )
 
 if __name__ == "__main__":
