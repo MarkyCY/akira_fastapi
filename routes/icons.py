@@ -18,9 +18,7 @@ PUBLIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 #         raise HTTPException(status_code=500, detail=str(e))
 
 @IconsAPI.get("/packs_with_icons/")
-async def list_packs_with_icons(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
+async def list_packs_with_icons():
     try:
         packs = [d for d in os.listdir(PUBLIC_DIR) if os.path.isdir(os.path.join(PUBLIC_DIR, d))]
         packs_with_icons = {}
