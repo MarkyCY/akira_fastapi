@@ -117,7 +117,7 @@ async def get_user_canva(user_id: int):
     canva_data = user["canva_json"]
     # Reconstruir el objeto CanvaRequest usando los datos guardados
     data = CanvaRequest(**canva_data)
-    scale = data.scale if data.scale else 1.0
+    scale = 2
     canvas_width = int(data.canvas_width * scale)
     canvas_height = int(data.canvas_height * scale)
     canvas = Image.new("RGBA", (canvas_width, canvas_height), data.bgColor)
@@ -149,7 +149,7 @@ async def get_user_canva(user_id: int):
             continue
     output = BytesIO()
     canvas = canvas.convert("RGBA")
-    canvas.save(output, format="PNG")
+    canvas.save(output, format="WEBP", quality=85)
     output.seek(0)
-    return StreamingResponse(output, media_type="image/png")
+    return StreamingResponse(output, media_type="image/webp")
 
