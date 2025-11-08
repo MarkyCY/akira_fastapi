@@ -8,6 +8,7 @@ from routes.token import TokenAPI
 from routes.group_stats import GroupStatsRoutes
 from routes.icons import IconsAPI
 from routes.canva import CanvaAPI
+from routes.my_anime_list import MyAL
 
 app = FastAPI(swagger_ui_parameters={"syntaxHighlight.theme": "obsidian"})
 
@@ -28,6 +29,11 @@ app.include_router(
 app.include_router(
     Users, 
     tags=["Usuarios"]
+    )
+app.include_router(
+    MyAL, 
+    prefix="/mal",
+    tags=["MyAnimeList"]
     )
 app.include_router(
     Contest, 
