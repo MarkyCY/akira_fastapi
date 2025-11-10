@@ -52,6 +52,7 @@ async def add_data(
 async def get_data(
     current_user: Annotated[User, Depends(get_current_active_user)],
     user_id: Optional[int] = None,
+    status: Optional[str] = "completed",
     page: int = 0,
     limit: int = 6
 ):
@@ -76,7 +77,7 @@ async def get_data(
             '$unwind': '$data'
         }, {
             '$match': {
-                'data.list_status.status': 'completed',
+                'data.list_status.status': status,
                 "user_id": user_id
             }
         }, {
@@ -90,11 +91,10 @@ async def get_data(
                 'nsfw': '$data.node.nsfw'
 
             }
-        }, {
-            '$skip': skip
-        }, {
-            '$limit': limit
-        }
+        }, 
+        { '$sort': { 'score': -1 } },
+        { '$skip': skip }, 
+        { '$limit': limit }
     ]
 
     user_data = await mal_data.aggregate(pipeline).to_list(length=limit)
