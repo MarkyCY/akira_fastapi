@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi.responses import FileResponse
 
 from models.users import User
-from funcs.users import get_current_active_user
+from funcs.users import get_current_active_user, get_user
 
 from database.mongo import get_db
 
@@ -20,11 +20,22 @@ async def read_users_me(
 ):
     return current_user  # Retorna la información del usuario actual
 
+
 @Users.get("/users/admin/")
 async def read_admin_data(
     current_user: Annotated[User, Security(get_current_active_user, scopes=["admin"])],
 ):
     return {"admin_data": "This is secret data only for admins!"}
+
+
+@Users.get("/user/{user_id}")
+async def get_user_by_id(
+    # current_user: Annotated[User, Depends(get_current_active_user)],
+    user_id: int
+):
+    user = await get_user(user_id)
+    return user
+
 
 @Users.get("/user/photo/{user_id}")
 async def get_user_photo(user_id: int):
@@ -38,7 +49,7 @@ async def get_user_photo(user_id: int):
     # Si el usuario no existe, devolver la imagen predeterminada
     if not user:
         return FileResponse(
-            default_image_path, 
+            default_image_path,
             media_type="image/webp",
             headers={"Cache-Control": "public, max-age=3600, immutable"}
         )
@@ -49,9 +60,8 @@ async def get_user_photo(user_id: int):
     # Si no hay avatar o no es válido, devolver la imagen predeterminada
     if not avatar:
         return FileResponse(
-            default_image_path, 
+            default_image_path,
             media_type="image/webp",
-            headers={"Cache-Control": "public, max-age=3600, immutable"}
         )
 
     # Intentar obtener la imagen desde el enlace de avatar
@@ -61,7 +71,7 @@ async def get_user_photo(user_id: int):
     except requests.RequestException:
         # Si hay un error en la solicitud, devolver la imagen predeterminada
         return FileResponse(
-            default_image_path, 
+            default_image_path,
             media_type="image/webp",
             headers={"Cache-Control": "public, max-age=3600, immutable"}
         )
