@@ -30,6 +30,8 @@ class CanvaRequest(BaseModel):
     canvas_height: Optional[int] = 158
     scale: Optional[float] = 1.0
 
+PUBLIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public")
+
 # @CanvaAPI.post("/export")
 # async def export_canva(data: CanvaRequest):
 #     scale = data.scale if data.scale else 1.0
@@ -133,7 +135,7 @@ async def import_canva(
     canvas = canvas.convert("RGBA")
     canvas.save(output, format="WEBP", quality=85)
     output.seek(0)
-    output_path = f"public/canvas/{current_user.user_id}.webp"
+    output_path = os.path.join(PUBLIC_DIR, "canvas", f"{current_user.user_id}.webp")
     with open(output_path, "wb") as f:
         f.write(output.getbuffer())
 
@@ -144,7 +146,7 @@ async def import_canva(
 
 @CanvaAPI.get("/user_canva/{user_id}")
 async def get_user_canva(user_id: int):
-    file_path = f"public/canvas/{user_id}.webp"
+    file_path = os.path.join(PUBLIC_DIR, "canvas", f"{user_id}.webp")
     if not os.path.exists(file_path):
         db = await get_db()
         users = db.users
