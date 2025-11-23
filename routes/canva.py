@@ -135,10 +135,10 @@ async def import_canva(
     canvas = canvas.convert("RGBA")
     canvas.save(output, format="WEBP", quality=85)
     output.seek(0)
-    
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     output_path = os.path.join(PUBLIC_DIR, "canvas", f"{current_user.user_id}.webp")
+    
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "wb") as f:
         f.write(output.getbuffer())
 
