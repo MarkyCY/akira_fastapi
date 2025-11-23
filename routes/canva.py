@@ -135,6 +135,9 @@ async def import_canva(
     canvas = canvas.convert("RGBA")
     canvas.save(output, format="WEBP", quality=85)
     output.seek(0)
+    
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     output_path = os.path.join(PUBLIC_DIR, "canvas", f"{current_user.user_id}.webp")
     with open(output_path, "wb") as f:
         f.write(output.getbuffer())
@@ -147,11 +150,11 @@ async def import_canva(
 @CanvaAPI.get("/user_canva/{user_id}")
 async def get_user_canva(user_id: int):
     file_path = os.path.join(PUBLIC_DIR, "canvas", f"{user_id}.webp")
+
+    # Si el archivo NO existe, lo generamos
     if not os.path.exists(file_path):
         db = await get_db()
         users = db.users
-
-        # Obtener el usuario actual
         user = await users.find_one({"user_id": user_id})
 
         if not user:
@@ -159,11 +162,15 @@ async def get_user_canva(user_id: int):
         
         if not user.get("canva_json"):
             raise HTTPException(status_code=404, detail="Canva no encontrado para este usuario")
+
         data = CanvaRequest(**user["canva_json"])
         scale = 2
         canvas_width = int(data.canvas_width * scale)
         canvas_height = int(data.canvas_height * scale)
+        
         canvas = Image.new("RGBA", (canvas_width, canvas_height), data.bgColor)
+
+        # ... (Lógica de generación de imagen igual que antes) ...
         if data.bgImage:
             try:
                 async with httpx.AsyncClient() as client:
@@ -174,6 +181,7 @@ async def get_user_canva(user_id: int):
                     canvas.paste(bg_img, (0, 0))
             except Exception:
                 pass
+
         for item in data.items:
             try:
                 async with httpx.AsyncClient() as client:
@@ -190,15 +198,18 @@ async def get_user_canva(user_id: int):
                     canvas.paste(img, (pos_x, pos_y), img)
             except Exception:
                 continue
+
         output = BytesIO()
         canvas = canvas.convert("RGBA")
         canvas.save(output, format="WEBP", quality=85)
         output.seek(0)
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
         with open(file_path, "wb") as f:
             f.write(output.getbuffer())
-        raise HTTPException(status_code=404, detail="Imagen no encontrada")
 
+    # Retornar el archivo (ya sea que existía antes o lo acabamos de crear)
     output = open(file_path, "rb")
-
     return StreamingResponse(output, media_type="image/webp")
 
