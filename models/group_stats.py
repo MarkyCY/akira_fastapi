@@ -27,14 +27,14 @@ class TopAdmin(BaseModel):
     deleted: int
     kicked: int
     banned: int
-    avatar: str | None
+    avatar: str | None = None
 
 class TopUser(BaseModel):
     user_id: int
     first_name: str | None
     messages: int
     avg_chars: int
-    avatar: str | None
+    avatar: str | None = None
 
 class StatsDaily(BaseModel):
     _id: str  # MongoDB uses _id as the primary key
