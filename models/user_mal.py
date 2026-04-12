@@ -164,3 +164,38 @@ class AnimeAPIResponse(BaseModel):
 
     class Config:
         extra = "ignore"  # ✅ Evita error si llegan campos nuevos
+
+
+class AnimeStatistics(BaseModel):
+    num_items_watching: Optional[int] = None
+    num_items_completed: Optional[int] = None
+    num_items_on_hold: Optional[int] = None
+    num_items_dropped: Optional[int] = None
+    num_items_plan_to_watch: Optional[int] = None
+    num_items: Optional[int] = None
+    num_days_watched: Optional[float] = None
+    num_days_watching: Optional[float] = None
+    num_days_completed: Optional[float] = None
+    num_days_on_hold: Optional[float] = None
+    num_days_dropped: Optional[float] = None
+    num_days: Optional[float] = None
+    num_episodes: Optional[int] = None
+    num_times_rewatched: Optional[int] = None
+    mean_score: Optional[float] = None
+
+    class Config:
+        extra = "ignore"
+
+
+class UserData(BaseModel):
+    id: int
+    name: str
+    gender: Optional[str] = None
+    birthday: Optional[str] = None
+    location: Optional[str] = None
+    joined_at: Optional[str] = None
+    picture: Optional[str] = None
+    anime_statistics: Optional[AnimeStatistics] = None
+
+    class Config:
+        extra = "ignore"

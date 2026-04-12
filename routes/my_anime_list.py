@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from typing import Annotated, Optional
 from models.users import User
-from models.user_mal import AnimeAPIResponse
+from models.user_mal import AnimeAPIResponse, UserData
 from funcs.users import get_current_active_user
 
 from database.mongo import get_db
@@ -28,8 +28,6 @@ async def add_data(
         data: AnimeAPIResponse = await request.json()
     except:
         raise HTTPException(status_code=400, detail="Invalid JSON data")
-
-    print("Received MAL data:", data['data'][0]['node'])
 
     db = await get_db()
 
@@ -100,3 +98,53 @@ async def get_data(
     user_data = await mal_data.aggregate(pipeline).to_list(length=limit)
 
     return JSONResponse(content={"data": user_data}, status_code=200)
+
+
+@MyAL.post("/add_user_data")
+async def add_user_data(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
+):
+    """
+    Agregar/actualizar datos del usuario de MAL
+    """
+    user_id = current_user.user_id
+
+    try:
+        data: UserData = await request.json()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid JSON data")
+
+    db = await get_db()
+    mal_users = db.mal_users
+
+    try:
+        await mal_users.update_one(
+            {"user_id": user_id},
+            {"$set": {"user_data": data}},
+            upsert=True
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Database error: " + str(e))
+
+    return JSONResponse(content={"message": "User data added/updated successfully"}, status_code=200)
+
+
+@MyAL.get("/get_user_data")
+async def get_user_data(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    user_id: int = None,
+):
+    """
+    Obtener datos del usuario de MAL desde la base de datos
+    """
+    db = await get_db()
+    mal_users = db.mal_users
+
+    user_data = await mal_users.find_one({"user_id": user_id})
+
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User data not found")
+
+    return JSONResponse(content={"data": user_data["user_data"]}, status_code=200)
