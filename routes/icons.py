@@ -1,54 +1,109 @@
-from fastapi import Depends, APIRouter, HTTPException
-from fastapi.responses import FileResponse
-from typing import Annotated
-from funcs.users import get_current_active_user
-from models.users import User
 import os
+
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+from dotenv import load_dotenv
+load_dotenv()
+
+import boto3
 
 IconsAPI = APIRouter()
 
-PUBLIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public")
+# --- Config S3 ---
+BUCKET_NAME = os.getenv("BUCKET_NAME")
+AWS_ACCESS_KEY = os.getenv("S3_AWS_ACCESS_KEY")
+AWS_SECRET_KEY = os.getenv("S3_AWS_SECRET_KEY")
 
-# @IconsAPI.get("/packs/")
-# async def list_icon_packs():
-#     try:
-#         packs = [d for d in os.listdir(PUBLIC_DIR) if os.path.isdir(os.path.join(PUBLIC_DIR, d))]
-#         return {"packs": packs}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+s3 = boto3.client(
+    "s3",
+    region_name="us-east-1",
+    endpoint_url="https://objstorage.leapcell.io",
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY
+)
+
+
+# --- Helpers ---
+def list_all_objects(prefix: str):
+    """Lista todos los objetos de un prefix (maneja paginación)"""
+    objects = []
+    continuation_token = None
+
+    while True:
+        kwargs = {
+            "Bucket": BUCKET_NAME,
+            "Prefix": prefix
+        }
+
+        if continuation_token:
+            kwargs["ContinuationToken"] = continuation_token
+
+        response = s3.list_objects_v2(**kwargs)
+
+        objects.extend(response.get("Contents", []))
+
+        if response.get("IsTruncated"):
+            continuation_token = response.get("NextContinuationToken")
+        else:
+            break
+
+    return objects
+
+
+# --- Endpoints ---
 
 @IconsAPI.get("/packs_with_icons/")
 async def list_packs_with_icons():
     try:
-        packs = [d for d in os.listdir(PUBLIC_DIR) if os.path.isdir(os.path.join(PUBLIC_DIR, d))]
+        response = s3.list_objects_v2(
+            Bucket=BUCKET_NAME,
+            Delimiter="/"
+        )
+
         packs_with_icons = {}
-        for pack in packs:
-            pack_path = os.path.join(PUBLIC_DIR, pack)
-            icons = [f for f in os.listdir(pack_path) if os.path.isfile(os.path.join(pack_path, f))]
+
+        for prefix in response.get("CommonPrefixes", []):
+            pack = prefix["Prefix"].rstrip("/")
+
+            # Ignorar canvas
+            if pack == "canvas":
+                continue
+
+            objects = list_all_objects(prefix["Prefix"])
+
+            icons = [
+                obj["Key"].split("/")[-1]
+                for obj in objects
+                if not obj["Key"].endswith("/")
+            ]
+
             packs_with_icons[pack] = icons
+
         return {"packs": packs_with_icons}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# @IconsAPI.get("/pack/{pack_name}/")
-# async def list_icons_in_pack(pack_name: str):
-#     pack_path = os.path.join(PUBLIC_DIR, pack_name)
-#     if not os.path.isdir(pack_path):
-#         raise HTTPException(status_code=404, detail="Pack no encontrado")
-#     try:
-#         icons = [f for f in os.listdir(pack_path) if os.path.isfile(os.path.join(pack_path, f))]
-#         return {"icons": icons}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 @IconsAPI.get("/pack/{pack_name}/{icon_name}")
 async def get_icon_image(pack_name: str, icon_name: str):
-    icon_path = os.path.join(PUBLIC_DIR, pack_name, icon_name)
-    if not os.path.isfile(icon_path):
-        raise HTTPException(status_code=404, detail="Icono no encontrado")
-    return FileResponse(
-            icon_path,
-            media_type="image/webp",
-            headers={"Cache-Control": "public, max-age=3600, immutable"}
+    try:
+        key = f"{pack_name}/{icon_name}"
+
+        obj = s3.get_object(
+            Bucket=BUCKET_NAME,
+            Key=key
         )
 
+        return StreamingResponse(
+            obj["Body"],
+            media_type=obj.get("ContentType", "application/octet-stream"),
+            headers={
+                "Cache-Control": "public, max-age=3600, immutable"
+            }
+        )
+
+    except s3.exceptions.NoSuchKey:
+        raise HTTPException(status_code=404, detail="Icono no encontrado")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
