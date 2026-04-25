@@ -34,8 +34,8 @@ class CanvaItem(BaseModel):
     src: str
     x: int | float
     y: int | float
-    width: int
-    height: int
+    width: int | float
+    height: int | float
     rotation: Optional[float] = 0
     isFixed: Optional[bool] = False
 
@@ -43,8 +43,8 @@ class CanvaRequest(BaseModel):
     items: List[CanvaItem]
     bgColor: Optional[str] = "#ffffff"
     bgImage: Optional[str] = None
-    canvas_width: Optional[int] = 318
-    canvas_height: Optional[int] = 158
+    canvas_width: Optional[int | float] = 318
+    canvas_height: Optional[int | float] = 158
     scale: Optional[float] = 1.0
 
 
