@@ -50,14 +50,16 @@ class CanvaRequest(BaseModel):
 
 # -------------------- UTIL: GENERAR IMAGEN --------------------
 async def generate_canvas_image(data: CanvaRequest) -> BytesIO:
-    scale = 2
+    # Usamos el scale que envía el frontend (actualmente 2)
+    scale = getattr(data, 'scale', 1.0)  # más seguro que data.scale directamente
+
+    # Canvas a resolución real (con upscale)
     canvas_width = int(data.canvas_width * scale)
     canvas_height = int(data.canvas_height * scale)
 
     canvas = Image.new("RGBA", (canvas_width, canvas_height), data.bgColor)
 
     async with httpx.AsyncClient() as client:
-
         # Background
         if data.bgImage:
             try:
@@ -76,6 +78,7 @@ async def generate_canvas_image(data: CanvaRequest) -> BytesIO:
                 resp.raise_for_status()
 
                 img = Image.open(BytesIO(resp.content)).convert("RGBA")
+                # Escalamos tamaño del icono
                 img = img.resize(
                     (int(item.width * scale), int(item.height * scale))
                 )
@@ -87,9 +90,13 @@ async def generate_canvas_image(data: CanvaRequest) -> BytesIO:
                         resample=Image.BICUBIC
                     )
 
+                # ← CORRECCIÓN AQUÍ
+                paste_x = int(item.x * scale)
+                paste_y = int(item.y * scale)
+
                 canvas.paste(
                     img,
-                    (int(item.x * scale), int(item.y * scale)),
+                    (paste_x, paste_y),
                     img
                 )
             except:
