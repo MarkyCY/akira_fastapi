@@ -4,6 +4,7 @@ from typing import List, Literal, Optional, Union
 
 class UserSubscription(BaseModel):
     user: Union[int, str]
+    avatar: Optional[str] = None
 
 class ContestModel(BaseModel):
     id: str
