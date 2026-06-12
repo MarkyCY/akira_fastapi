@@ -13,12 +13,12 @@ from models.users import User
 # -------------------- S3 CONFIG --------------------
 AWS_ACCESS_KEY = os.getenv("S3_AWS_ACCESS_KEY")
 AWS_SECRET_KEY = os.getenv("S3_AWS_SECRET_KEY")
+AWS_ENDPOINT =  os.getenv("S3_AWS_ENDPOINT")
 BUCKET = os.getenv("BUCKET_NAME")
 
 s3 = boto3.client(
     "s3",
-    region_name="us-east-1",
-    endpoint_url="https://objstorage.leapcell.io",
+    endpoint_url=AWS_ENDPOINT,
     aws_access_key_id=AWS_ACCESS_KEY,
     aws_secret_access_key=AWS_SECRET_KEY
 )
